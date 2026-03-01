@@ -21,7 +21,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor — auto-logout on 401 (expired/invalid token)
+// Response interceptor — dispatch custom event on 401 for SPA-aware logout
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -32,10 +32,9 @@ api.interceptors.response.use(
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
 
-      // Redirect to auth page (only if not already there)
-      if (!window.location.pathname.startsWith('/auth')) {
-        window.location.href = '/auth';
-      }
+      // B-04 FIX: Dispatch custom event instead of window.location.href
+      // AuthContext listens for this and uses React Router navigate()
+      window.dispatchEvent(new CustomEvent('auth:expired'));
     }
     return Promise.reject(error);
   }

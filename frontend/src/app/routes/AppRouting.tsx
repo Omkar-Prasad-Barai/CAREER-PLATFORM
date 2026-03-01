@@ -28,6 +28,7 @@ import PrivacyPolicy from '../../pages/Utility/PrivacyPolicy';
 import TermsOfService from '../../pages/Utility/TermsOfService';
 import ContactUs from '../../pages/Utility/ContactUs';
 import Unauthorized from '../../pages/Utility/Unauthorized';
+import NotFound from '../../pages/Utility/NotFound';
 
 const AppRouting = () => {
     return (
@@ -107,6 +108,9 @@ const AppRouting = () => {
                 <Route path="spam" element={<AdminSpam />} />
                 <Route path="settings" element={<AdminSettings />} />
             </Route>
+
+            {/* F-01 FIX: Catch-all route for unknown URLs */}
+            <Route path="*" element={<NotFound />} />
         </Routes>
     );
 };

@@ -73,6 +73,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     hydrate();
   }, []);
 
+  // B-04 FIX: Listen for auth:expired events from the Axios 401 interceptor
+  // This allows SPA-aware navigation instead of hard window.location.href redirect
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      setToken(null);
+      setRole('guest');
+      navigate('/auth', { replace: true });
+    };
+
+    window.addEventListener('auth:expired', handleExpired);
+    return () => window.removeEventListener('auth:expired', handleExpired);
+  }, [navigate]);
+
   const loginUser = async (email: string, password: string, rememberMe?: boolean): Promise<UserData> => {
     setIsLoading(true);
     try {

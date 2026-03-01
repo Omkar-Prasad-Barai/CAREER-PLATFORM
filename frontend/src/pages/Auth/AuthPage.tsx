@@ -115,11 +115,9 @@ const AuthPage = () => {
             }
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-                console.error('Auth Error Response:', error.response?.data);
                 const message = error.response?.data?.message || 'Something went wrong. Please try again.';
                 toast.error(message);
             } else {
-                console.error('Unexpected Auth Error:', error);
                 toast.error('An unexpected error occurred.');
             }
         }

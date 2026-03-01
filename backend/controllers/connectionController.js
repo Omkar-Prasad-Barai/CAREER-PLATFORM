@@ -1,4 +1,5 @@
 import ConnectionRequest from '../models/ConnectionRequest.js';
+import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import { sendEmail } from '../services/emailService.js';
 import * as emailTemplates from '../services/emailTemplates.js';
@@ -83,15 +84,50 @@ export const updateRequestStatus = async (req, res) => {
     if (adminNotes) connectionRequest.adminNotes = adminNotes;
     await connectionRequest.save();
 
+    const seeker = connectionRequest.seekerId;
+    const facilitator = connectionRequest.facilitatorId;
+    const opportunityTitle = connectionRequest.opportunityId?.title || 'an opportunity';
+
+    // B-01 FIX: Create in-app Notification documents for both parties
+    const notificationPromises = [];
+
+    if (status === 'approved') {
+      notificationPromises.push(
+        Notification.create({
+          userId: seeker._id,
+          type: 'connection_approved',
+          message: `Your connection with ${facilitator.fullName} for "${opportunityTitle}" has been approved!`,
+          link: '/dashboard',
+        }),
+        Notification.create({
+          userId: facilitator._id,
+          type: 'new_applicant',
+          message: `${seeker.fullName} has been connected to you for "${opportunityTitle}".`,
+          link: '/dashboard',
+        })
+      );
+    } else {
+      notificationPromises.push(
+        Notification.create({
+          userId: seeker._id,
+          type: 'application_update',
+          message: `Your connection request for "${opportunityTitle}" was not approved.${adminNotes ? ` Reason: ${adminNotes}` : ''}`,
+          link: '/dashboard',
+        })
+      );
+    }
+
+    // Fire-and-forget notifications — never block the response
+    Promise.all(notificationPromises).catch((err) =>
+      console.error('[Notification] Creation error:', err.message)
+    );
+
     // Send notification emails on approval (non-blocking)
     if (status === 'approved') {
-      const seeker = connectionRequest.seekerId;
-      const facilitator = connectionRequest.facilitatorId;
-      const opportunityTitle = connectionRequest.opportunityId?.title || 'an opportunity';
       const platformUrl = process.env.CLIENT_URL || 'http://localhost:5173';
 
-      // Fire-and-forget with Promise.allSettled — never block the response
-      Promise.allSettled([
+      // B-02 FIX: Use Promise.all (can reject) instead of Promise.allSettled (never rejects)
+      Promise.all([
         sendEmail({
           to: seeker.email,
           subject: '🎉 Your Connection Has Been Approved — CareerConnect',
