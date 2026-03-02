@@ -8,6 +8,7 @@ import {
   getAllUsers,
   uploadResume,
 } from '../controllers/userController.js';
+import { FACILITATOR_ROLES } from '../utils/constants.js';
 
 const router = express.Router();
 
@@ -34,7 +35,7 @@ router.post(
 router.get(
   '/masked-talent',
   protect,
-  authorizeRoles('organization', 'professor', 'recruiter', 'professional', 'others', 'admin'),
+  authorizeRoles(...FACILITATOR_ROLES),
   getMaskedTalentPool
 );
 

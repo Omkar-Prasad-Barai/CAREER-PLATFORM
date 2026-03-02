@@ -3,6 +3,7 @@ import api from './api';
 // The backend response now includes role-specific fields at the top level
 // (via Mongoose Discriminators), plus base fields and token.
 export interface AuthResponse {
+  success: boolean;
   _id: string;
   fullName: string;
   email: string;
@@ -38,7 +39,7 @@ interface LoginPayload {
  * Extract UserData from the API response (strips token and internal fields).
  */
 const extractUserData = (data: AuthResponse): UserData => {
-  const { token, message, __v, password, ...userData } = data as Record<string, unknown>;
+  const { success, token, message, __v, password, ...userData } = data as Record<string, unknown>;
   return userData as UserData;
 };
 

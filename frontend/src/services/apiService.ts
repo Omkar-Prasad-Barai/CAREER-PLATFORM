@@ -1,5 +1,19 @@
 import api from './api';
 
+export interface Pagination {
+  total: number;
+  page: number;
+  pages: number;
+  limit: number;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+  pagination?: Pagination;
+}
+
 // ──────────────── Opportunities ────────────────
 
 export interface Opportunity {
@@ -19,14 +33,14 @@ export interface Opportunity {
   updatedAt: string;
 }
 
-export const getOpportunities = async (): Promise<Opportunity[]> => {
-  const response = await api.get<Opportunity[]>('/opportunities');
-  return response.data;
+export const getOpportunities = async (page: number = 1, limit: number = 10): Promise<Opportunity[]> => {
+  const response = await api.get<ApiResponse<Opportunity[]>>(`/opportunities?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
-export const getMyOpportunities = async (): Promise<Opportunity[]> => {
-  const response = await api.get<Opportunity[]>('/opportunities/mine');
-  return response.data;
+export const getMyOpportunities = async (page: number = 1, limit: number = 10): Promise<Opportunity[]> => {
+  const response = await api.get<ApiResponse<Opportunity[]>>(`/opportunities/mine?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
 export const createOpportunity = async (data: {
@@ -40,13 +54,18 @@ export const createOpportunity = async (data: {
   eligibility?: string;
   skillsRequired?: string[];
 }): Promise<Opportunity> => {
-  const response = await api.post<Opportunity>('/opportunities', data);
-  return response.data;
+  const response = await api.post<ApiResponse<Opportunity>>('/opportunities', data);
+  return response.data.data;
+};
+
+export const updateOpportunity = async (id: string, data: Partial<Opportunity>): Promise<Opportunity> => {
+  const response = await api.put<ApiResponse<Opportunity>>(`/opportunities/${id}`, data);
+  return response.data.data;
 };
 
 export const deleteOpportunity = async (id: string): Promise<{ message: string }> => {
-  const response = await api.delete<{ message: string }>(`/opportunities/${id}`);
-  return response.data;
+  const response = await api.delete<ApiResponse<null>>(`/opportunities/${id}`);
+  return { message: response.data.message || 'Deleted' };
 };
 
 // ──────────────── Masked Talent Pool ────────────────
@@ -57,9 +76,9 @@ export interface MaskedTalent {
   [key: string]: unknown; // Discriminator fields are top-level
 }
 
-export const getMaskedTalent = async (): Promise<MaskedTalent[]> => {
-  const response = await api.get<MaskedTalent[]>('/users/masked-talent');
-  return response.data;
+export const getMaskedTalent = async (page: number = 1, limit: number = 10): Promise<MaskedTalent[]> => {
+  const response = await api.get<ApiResponse<MaskedTalent[]>>(`/users/masked-talent?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
 // ──────────────── Connections ────────────────
@@ -79,14 +98,15 @@ export const requestConnection = async (
   facilitatorId: string,
   opportunityId?: string
 ): Promise<ConnectionResponse> => {
-  const response = await api.post<ConnectionResponse>('/connections/request', {
+  const response = await api.post<ApiResponse<ConnectionResponse['connectionRequest']>>('/connections/request', {
     facilitatorId,
     ...(opportunityId && { opportunityId }),
   });
-  return response.data;
+  return {
+    message: response.data.message || 'Requested',
+    connectionRequest: response.data.data
+  };
 };
-
-// ──────────────── Admin Connection Requests ────────────────
 
 export interface ConnectionRequest {
   _id: string;
@@ -99,9 +119,9 @@ export interface ConnectionRequest {
   updatedAt: string;
 }
 
-export const getPendingRequests = async (): Promise<ConnectionRequest[]> => {
-  const response = await api.get<ConnectionRequest[]>('/connections/admin/pending');
-  return response.data;
+export const getPendingRequests = async (page: number = 1, limit: number = 10): Promise<ConnectionRequest[]> => {
+  const response = await api.get<ApiResponse<ConnectionRequest[]>>(`/connections/admin/pending?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
 export const updateConnectionStatus = async (
@@ -109,11 +129,14 @@ export const updateConnectionStatus = async (
   status: 'approved' | 'rejected',
   adminNotes?: string
 ): Promise<{ message: string; connectionRequest: ConnectionRequest }> => {
-  const response = await api.put<{ message: string; connectionRequest: ConnectionRequest }>(
+  const response = await api.put<ApiResponse<ConnectionRequest>>(
     `/connections/admin/update/${id}`,
     { status, ...(adminNotes && { adminNotes }) }
   );
-  return response.data;
+  return {
+    message: response.data.message || 'Updated',
+    connectionRequest: response.data.data
+  };
 };
 
 // ──────────────── Notifications ────────────────
@@ -129,39 +152,49 @@ export interface NotificationItem {
   updatedAt: string;
 }
 
-export const getNotifications = async (): Promise<NotificationItem[]> => {
-  const response = await api.get<NotificationItem[]>('/notifications');
-  return response.data;
+export const getNotifications = async (page: number = 1, limit: number = 20): Promise<NotificationItem[]> => {
+  const response = await api.get<ApiResponse<NotificationItem[]>>(`/notifications?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
 export const markAllNotificationsRead = async (): Promise<{ message: string }> => {
-  const response = await api.put<{ message: string }>('/notifications/mark-all-read');
-  return response.data;
+  const response = await api.put<ApiResponse<null>>('/notifications/mark-all-read');
+  return { message: response.data.message || 'Marked all as read' };
 };
 
 export const markNotificationRead = async (id: string): Promise<NotificationItem> => {
-  const response = await api.put<NotificationItem>(`/notifications/${id}/read`);
-  return response.data;
+  const response = await api.put<ApiResponse<NotificationItem>>(`/notifications/${id}/read`);
+  return response.data.data;
+};
+
+export const clearAllNotifications = async (): Promise<{ message: string }> => {
+  const response = await api.delete<ApiResponse<null>>('/notifications/clear-all');
+  return { message: response.data.message || 'Cleared all' };
+};
+
+export const deleteNotification = async (id: string): Promise<{ message: string }> => {
+  const response = await api.delete<ApiResponse<null>>(`/notifications/${id}`);
+  return { message: response.data.message || 'Deleted' };
 };
 
 // ──────────────── User Profile ────────────────
 
 export const fetchUserProfile = async (): Promise<Record<string, unknown>> => {
-  const response = await api.get<Record<string, unknown>>('/users/profile');
-  return response.data;
+  const response = await api.get<ApiResponse<Record<string, unknown>>>('/users/profile');
+  return response.data.data;
 };
 
 export const updateUserProfile = async (data: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const response = await api.put<Record<string, unknown>>('/users/profile', data);
-  return response.data;
+  const response = await api.put<ApiResponse<Record<string, unknown>>>('/users/profile', data);
+  return response.data.data;
 };
 
 export const uploadResume = async (file: File): Promise<{ resumeUrl: string; user: Record<string, unknown> }> => {
   const formData = new FormData();
   formData.append('resume', file);
   // DO NOT set Content-Type header — browser handles multipart boundary automatically
-  const response = await api.post<{ resumeUrl: string; user: Record<string, unknown> }>('/users/upload-resume', formData);
-  return response.data;
+  const response = await api.post<ApiResponse<{ resumeUrl: string; user: Record<string, unknown> }>>('/users/upload-resume', formData);
+  return response.data.data;
 };
 
 // ──────────────── Testimonials ────────────────
@@ -178,9 +211,9 @@ export interface Testimonial {
   createdAt: string;
 }
 
-export const getTestimonials = async (): Promise<Testimonial[]> => {
-  const response = await api.get<Testimonial[]>('/testimonials');
-  return response.data;
+export const getTestimonials = async (page: number = 1, limit: number = 10): Promise<Testimonial[]> => {
+  const response = await api.get<ApiResponse<Testimonial[]>>(`/testimonials?page=${page}&limit=${limit}`);
+  return response.data.data;
 };
 
 export const createTestimonial = async (data: {
@@ -189,8 +222,23 @@ export const createTestimonial = async (data: {
   quote: string;
   rating: number;
 }): Promise<Testimonial> => {
-  const response = await api.post<Testimonial>('/testimonials', data);
-  return response.data;
+  const response = await api.post<ApiResponse<Testimonial>>('/testimonials', data);
+  return response.data.data;
+};
+
+export const getPendingTestimonials = async (page: number = 1, limit: number = 10): Promise<Testimonial[]> => {
+  const response = await api.get<ApiResponse<Testimonial[]>>(`/testimonials/admin/pending?page=${page}&limit=${limit}`);
+  return response.data.data;
+};
+
+export const approveTestimonial = async (id: string): Promise<Testimonial> => {
+  const response = await api.put<ApiResponse<Testimonial>>(`/testimonials/${id}/approve`);
+  return response.data.data;
+};
+
+export const deleteTestimonial = async (id: string): Promise<{ message: string }> => {
+  const response = await api.delete<ApiResponse<null>>(`/testimonials/${id}`);
+  return { message: response.data.message || 'Deleted' };
 };
 
 // ──────────────── Announcements ────────────────
@@ -204,6 +252,26 @@ export interface AnnouncementData {
 }
 
 export const getActiveAnnouncements = async (): Promise<AnnouncementData[]> => {
-  const response = await api.get<AnnouncementData[]>('/announcements/active');
-  return response.data;
+  const response = await api.get<ApiResponse<AnnouncementData[]>>('/announcements/active');
+  return response.data.data;
+};
+
+export const getAllAnnouncements = async (page: number = 1, limit: number = 10): Promise<AnnouncementData[]> => {
+  const response = await api.get<ApiResponse<AnnouncementData[]>>(`/announcements?page=${page}&limit=${limit}`);
+  return response.data.data;
+};
+
+export const createAnnouncement = async (data: Partial<AnnouncementData>): Promise<AnnouncementData> => {
+  const response = await api.post<ApiResponse<AnnouncementData>>('/announcements', data);
+  return response.data.data;
+};
+
+export const updateAnnouncement = async (id: string, data: Partial<AnnouncementData>): Promise<AnnouncementData> => {
+  const response = await api.put<ApiResponse<AnnouncementData>>(`/announcements/${id}`, data);
+  return response.data.data;
+};
+
+export const deleteAnnouncement = async (id: string): Promise<{ message: string }> => {
+  const response = await api.delete<ApiResponse<null>>(`/announcements/${id}`);
+  return { message: response.data.message || 'Deleted' };
 };

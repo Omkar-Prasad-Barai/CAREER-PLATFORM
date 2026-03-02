@@ -4,8 +4,10 @@ import {
   createOpportunity,
   getOpportunities,
   getMyOpportunities,
+  updateOpportunity,
   deleteOpportunity,
 } from '../controllers/opportunityController.js';
+import { FACILITATOR_ROLES } from '../utils/constants.js';
 
 const router = express.Router();
 
@@ -18,7 +20,7 @@ router.get('/', protect, getOpportunities);
 router.get(
   '/mine',
   protect,
-  authorizeRoles('organization', 'professor', 'professional', 'recruiter', 'others', 'admin'),
+  authorizeRoles(...FACILITATOR_ROLES),
   getMyOpportunities
 );
 
@@ -27,9 +29,13 @@ router.get(
 router.post(
   '/',
   protect,
-  authorizeRoles('organization', 'professor', 'professional', 'recruiter', 'others', 'admin'),
+  authorizeRoles(...FACILITATOR_ROLES),
   createOpportunity
 );
+
+// @route   PUT /api/opportunities/:id
+// @access  Private (Owner only)
+router.put('/:id', protect, authorizeRoles(...FACILITATOR_ROLES), updateOpportunity);
 
 // @route   DELETE /api/opportunities/:id
 // @access  Private (Owner or Admin)

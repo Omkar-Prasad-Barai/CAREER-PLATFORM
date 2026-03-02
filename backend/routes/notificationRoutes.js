@@ -4,6 +4,8 @@ import {
   getNotifications,
   markAllRead,
   markOneRead,
+  deleteNotification,
+  clearAll,
 } from '../controllers/notificationController.js';
 
 const router = express.Router();
@@ -16,8 +18,16 @@ router.get('/', protect, getNotifications);
 // @access  Private
 router.put('/mark-all-read', protect, markAllRead);
 
+// @route   DELETE /api/notifications/clear-all
+// @access  Private
+router.delete('/clear-all', protect, clearAll);
+
 // @route   PUT /api/notifications/:id/read
 // @access  Private
 router.put('/:id/read', protect, markOneRead);
+
+// @route   DELETE /api/notifications/:id
+// @access  Private
+router.delete('/:id', protect, deleteNotification);
 
 export default router;
