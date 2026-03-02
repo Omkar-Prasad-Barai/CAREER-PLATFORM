@@ -22,6 +22,8 @@ import AdminApprovals from '../../pages/Admin/AdminApprovals';
 import AdminUsers from '../../pages/Admin/AdminUsers';
 import AdminSpam from '../../pages/Admin/AdminSpam';
 import AdminSettings from '../../pages/Admin/AdminSettings';
+import AdminAnnouncements from '../../pages/Admin/AdminAnnouncements';
+import AdminTestimonials from '../../pages/Admin/AdminTestimonials';
 
 // Utility Pages
 import PrivacyPolicy from '../../pages/Utility/PrivacyPolicy';
@@ -105,6 +107,8 @@ const AppRouting = () => {
                 <Route path="dashboard" element={<Navigate replace to="/admin" />} />
                 <Route path="approvals" element={<AdminApprovals />} />
                 <Route path="users" element={<AdminUsers />} />
+                <Route path="announcements" element={<AdminAnnouncements />} />
+                <Route path="testimonials" element={<AdminTestimonials />} />
                 <Route path="spam" element={<AdminSpam />} />
                 <Route path="settings" element={<AdminSettings />} />
             </Route>

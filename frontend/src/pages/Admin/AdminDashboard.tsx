@@ -1,7 +1,37 @@
-import { Users, ShieldAlert, AlertOctagon, Sparkles, TrendingUp } from 'lucide-react';
+import { Users, ShieldAlert, AlertOctagon, Sparkles, TrendingUp, Megaphone, Bell, Send, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 import { CustomSelect } from '../../components/ui/CustomSelect';
+import { createAnnouncement } from '../../services/apiService';
 
 const AdminDashboard = () => {
+    const [broadcastMsg, setBroadcastMsg] = useState('');
+    const [broadcastEmoji, setBroadcastEmoji] = useState('📢');
+    const [broadcasting, setBroadcasting] = useState(false);
+
+    const handleBroadcast = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!broadcastMsg.trim()) {
+            toast.error('Message cannot be empty.');
+            return;
+        }
+        setBroadcasting(true);
+        try {
+            await createAnnouncement({ message: broadcastMsg, emoji: broadcastEmoji, isActive: true, priority: 10 });
+            toast.success('System announcement broadcast successfully!');
+            setBroadcastMsg('');
+            setBroadcastEmoji('📢');
+        } catch (err: unknown) {
+            const msg = axios.isAxiosError(err)
+                ? err.response?.data?.message || 'Failed to broadcast.'
+                : 'An unexpected error occurred.';
+            toast.error(msg);
+        } finally {
+            setBroadcasting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -142,6 +172,79 @@ const AdminDashboard = () => {
                             </div>
                         ))}
                     </div>
+                </div>
+            </div>
+
+            {/* Notification Management / System Broadcast */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Broadcast System Alert */}
+                <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+                    <div className="flex items-center gap-3 mb-5">
+                        <div className="h-9 w-9 rounded-xl bg-violet-100 flex items-center justify-center border border-violet-200">
+                            <Megaphone className="w-5 h-5 text-violet-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-semibold text-slate-800">Broadcast System Alert</h3>
+                            <p className="text-xs text-slate-500">Publish an active announcement visible to all users.</p>
+                        </div>
+                    </div>
+                    <form onSubmit={handleBroadcast} className="space-y-3">
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                value={broadcastEmoji}
+                                onChange={e => setBroadcastEmoji(e.target.value)}
+                                maxLength={4}
+                                placeholder="📢"
+                                className="w-14 text-lg text-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                            />
+                            <input
+                                type="text"
+                                value={broadcastMsg}
+                                onChange={e => setBroadcastMsg(e.target.value)}
+                                placeholder="Type your system announcement..."
+                                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            disabled={broadcasting}
+                            className="w-full flex items-center justify-center gap-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold py-2.5 rounded-xl transition-colors disabled:opacity-60 shadow-sm"
+                        >
+                            {broadcasting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            Broadcast Now
+                        </button>
+                    </form>
+                </div>
+
+                {/* Notification Panel Info */}
+                <div className="bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-800 rounded-2xl shadow-xl p-6 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/20 rounded-full blur-2xl -mr-10 -mt-10" />
+                    <div className="flex items-center gap-3 mb-4 relative z-10">
+                        <div className="h-9 w-9 rounded-xl bg-indigo-800/60 flex items-center justify-center border border-indigo-500">
+                            <Bell className="w-5 h-5 text-yellow-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-semibold text-white">Notification System</h3>
+                            <p className="text-xs text-indigo-300">Auto-generated in-app alerts for users.</p>
+                        </div>
+                    </div>
+                    <ul className="space-y-2 text-sm relative z-10">
+                        {[
+                            { label: 'Connection approved', color: 'bg-emerald-500' },
+                            { label: 'Connection request received', color: 'bg-blue-400' },
+                            { label: 'Application status update', color: 'bg-amber-400' },
+                            { label: 'System announcements', color: 'bg-violet-400' },
+                        ].map(item => (
+                            <li key={item.label} className="flex items-center gap-2.5 text-indigo-200">
+                                <span className={`h-2 w-2 rounded-full flex-shrink-0 ${item.color}`} />
+                                {item.label}
+                            </li>
+                        ))}
+                    </ul>
+                    <p className="text-xs text-indigo-400 mt-4 relative z-10">
+                        Notifications are auto-generated on connection events. Per-user management is available in the User Management tab.
+                    </p>
                 </div>
             </div>
         </div>

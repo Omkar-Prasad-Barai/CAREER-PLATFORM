@@ -7,7 +7,9 @@ import {
     Settings,
     Menu,
     X,
-    LogOut
+    LogOut,
+    Megaphone,
+    MessageSquare
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +28,8 @@ const AdminLayout = () => {
         { path: '/admin', label: 'Overview', icon: LayoutDashboard },
         { path: '/admin/approvals', label: 'Connection Approvals', icon: ShieldCheck },
         { path: '/admin/users', label: 'User Management', icon: Users },
+        { path: '/admin/announcements', label: 'Announcements', icon: Megaphone },
+        { path: '/admin/testimonials', label: 'Testimonials', icon: MessageSquare },
         { path: '/admin/spam', label: 'Spam Control', icon: AlertOctagon },
         { path: '/admin/settings', label: 'Platform Settings', icon: Settings },
     ];
